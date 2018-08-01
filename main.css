@@ -1,0 +1,40 @@
+/* CSS Document */
+
+body
+{
+	width:750px;
+    margin:0 auto;
+}
+textarea {
+	font-size: 12pt;
+	font-family: Arial;
+    width:750px;
+} 
+.uyghur {
+	text-align:center;
+	direction:rtl;
+	font-family: "UKIJ_Mac Basma";
+	font-size: 24px;
+	font-style: normal;
+}
+
+.head1 {
+	text-align:center;
+	font-family: Georgia, "Times New Roman", Times, serif;
+	font-size: 24px;
+}
+#letter_select{
+	width:750;
+}
+textarea{
+	width:750px;
+	height:200px;
+	border:1px solid #000000;
+	background-color:#CCCCCC;
+}
+
+.letter_select_fields,div{
+	color:red;
+	display:inline;
+	direction:rtl;
+}
