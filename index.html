@@ -7,42 +7,78 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Uyghur &amp; Latin — Alphabet Converter</title>
+<link rel="preload" href="fonts/UKIJTuzBasma.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/UKIJTuzBasmaBold.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Sans:wght@400;500;600&family=Noto+Naskh+Arabic:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Noto+Naskh+Arabic:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-  /* UKIJ faces, self-hosted. Subset to Latin + Arabic and converted to
-     woff2 (pixel-identical to the originals). `local()` first, so anyone
-     with the desktop font installed renders from disk and downloads
-     nothing; everyone else pulls ~25 KB, and only for the face they
-     actually pick. Fonts are free from http://www.ukij.org */
+  /* UKIJ faces, self-hosted. Subset to Latin + Arabic + the symbols the
+     interface draws, then converted to woff2 — verified pixel-identical to
+     the originals. Fonts are free from ukij.org.
+
+     Each family ships regular and bold, because the selected face sets the
+     interface as well as the Uyghur text and the UI has 600-weight labels;
+     without a real bold the browser would synthesize one. No local(): the
+     page should render the same for everyone rather than shifting for
+     whoever has the desktop fonts, and the installed originals differ from
+     these subsets at U+2192 (see fonts/README.md). Only Tuz Basma, the
+     default, is preloaded; the rest arrive when picked. */
   @font-face {
     font-family: 'UKIJ Tuz Basma';
-    src: local('UKIJ Tuz Basma'), url('fonts/UKIJTuzBasma.woff2') format('woff2');
+    src: url('fonts/UKIJTuzBasma.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'UKIJ Tuz Basma';
+    src: url('fonts/UKIJTuzBasmaBold.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'UKIJ Tuz Kitab';
+    src: url('fonts/UKIJTuzKitab.woff2') format('woff2');
     font-weight: 400;
     font-style: normal;
     font-display: swap;
   }
   @font-face {
     font-family: 'UKIJ Tuz Kitab';
-    src: local('UKIJ Tuz Kitab'), url('fonts/UKIJTuzKitab.woff2') format('woff2');
+    src: url('fonts/UKIJTuzKitabBold.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'UKIJ Basma Qara';
+    src: url('fonts/UKIJBasmaQara.woff2') format('woff2');
     font-weight: 400;
     font-style: normal;
     font-display: swap;
   }
   @font-face {
     font-family: 'UKIJ Basma Qara';
-    src: local('UKIJ Basma Qara'), url('fonts/UKIJBasmaQara.woff2') format('woff2');
+    src: url('fonts/UKIJBasmaQaraBold.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'UKIJ Tuz Gezit';
+    src: url('fonts/UKIJTuzGezit.woff2') format('woff2');
     font-weight: 400;
     font-style: normal;
     font-display: swap;
   }
   @font-face {
     font-family: 'UKIJ Tuz Gezit';
-    src: local('UKIJ Tuz Gezit'), url('fonts/UKIJTuzGezit.woff2') format('woff2');
-    font-weight: 400;
+    src: url('fonts/UKIJTuzGezitBold.woff2') format('woff2');
+    font-weight: 700;
     font-style: normal;
     font-display: swap;
   }
@@ -67,8 +103,9 @@
     --on-dark-muted: #8FA39C;
     --on-dark-faint: #62766F;
     --serif: 'Instrument Serif', Georgia, 'Times New Roman', serif;
-    --sans: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
-    --arabic: 'Noto Naskh Arabic', 'UKIJ Tuz Tom', 'Scheherazade New', serif;
+    /* --sans and --arabic both follow the selected font; see applyFont(). */
+    --sans: 'UKIJ Tuz Basma', system-ui, -apple-system, sans-serif;
+    --arabic: 'UKIJ Tuz Basma', 'Noto Naskh Arabic', serif;
   }
 
   html { -webkit-text-size-adjust: 100%; }
@@ -533,7 +570,7 @@
         </div>
       </section>
 
-      <p class="note">The Uyghur font and the letter mappings for <span lang="ug">ئە</span>, <span lang="ug">خ</span>, <span lang="ug">چ</span> and <span lang="ug">ش</span> can be changed in settings and are remembered on this device.</p>
+      <p class="note">The font (used for the Uyghur text and the interface alike) and the letter mappings for <span lang="ug">ئە</span>, <span lang="ug">خ</span>, <span lang="ug">چ</span> and <span lang="ug">ش</span> can be changed in settings and are remembered on this device.</p>
     </main>
 
     <footer class="site-foot">
@@ -550,7 +587,7 @@
       </div>
 
       <div class="sheet-section">
-        <span class="section-label">Uyghur font</span>
+        <span class="section-label">Font</span>
         <div class="font-list" id="fontRows"></div>
         <p class="sheet-note" id="fontHint"></p>
       </div>
@@ -632,16 +669,20 @@
      still ends in Noto Naskh Arabic in case a download fails.
      ------------------------------------------------------------------ */
   var FONTS = [
-    { id: 'noto',      name: 'Noto Naskh Arabic', note: 'Naskh, the default',   builtin: true },
-    { id: 'tuzbasma',  name: 'UKIJ Tuz Basma',    note: 'Body text' },
+    { id: 'tuzbasma',  name: 'UKIJ Tuz Basma',    note: 'Body text, the default' },
     { id: 'tuzkitab',  name: 'UKIJ Tuz Kitab',    note: 'Body text, wider' },
     { id: 'basmaqara', name: 'UKIJ Basma Qara',   note: 'Heavier, compact' },
-    { id: 'tuzgezit',  name: 'UKIJ Tuz Gezit',    note: 'Newspaper' }
+    { id: 'tuzgezit',  name: 'UKIJ Tuz Gezit',    note: 'Newspaper' },
+    { id: 'noto',      name: 'Noto Naskh Arabic', note: 'Naskh',  builtin: true }
   ];
   FONTS.forEach(function (f) {
+    // stack: Uyghur text.  uiStack: the Latin interface, same face.
     f.stack = f.builtin
       ? "'Noto Naskh Arabic', serif"
       : "'" + f.name + "', 'Noto Naskh Arabic', serif";
+    f.uiStack = f.builtin
+      ? "'Noto Naskh Arabic', system-ui, -apple-system, sans-serif"
+      : "'" + f.name + "', system-ui, -apple-system, sans-serif";
   });
   var FONT_SAMPLE = 'ئۇيغۇرچە يېزىق';
 
@@ -659,37 +700,56 @@
   ).split(' ');
 
   /* Build the settings-dependent part of the table. */
-  function buildTable(cfg) {
+  /* x cannot stand for both خ and ش. The settings UI stops you selecting
+     that pair, but the tables must be correct on their own too — otherwise
+     whichever entry happened to be pushed first would silently win. */
+  function normalize(cfg) {
+    var h = cfg.h === 'h' ? 'h' : 'x';
+    var sh = cfg.sh === 'x' ? 'x' : 'sh';
+    if (h === 'x' && sh === 'x') sh = 'sh';
+    return {
+      e: cfg.e === 'ë' ? 'ë' : 'e',
+      h: h,
+      q: cfg.q === 'q' ? 'q' : 'ch',
+      sh: sh
+    };
+  }
+
+  function buildTable(raw) {
+    var cfg = normalize(raw);
     var t = BASE.concat(PUNCT);
+
+    // The Yengi Yeziq letters for ھ and ق are always accepted as input,
+    // whichever convention is selected.
+    t = t.concat([['ⱨ', 'ھ', true], ['ⱪ', 'ق', true]]);
 
     // خ  and  ھ
     if (cfg.h === 'x') {
       t = t.concat([['x', 'خ'], ['h', 'ھ']]);
     } else {
-      // h is spoken for by خ, so ھ takes the digraph hh (plus ⱨ, the
-      // Yengi Yeziq letter, as an alias). Without this ھ was untypable.
-      t = t.concat([
-        ['h', 'خ'],
-        ['hh', 'ھ'],
-        ['ⱨ', 'ھ', true]
-      ]);
+      // h is spoken for by خ, so ھ takes the digraph hh. Without this ھ
+      // was untypable.
+      t = t.concat([['h', 'خ'], ['hh', 'ھ']]);
     }
 
     // چ  and  ق
     if (cfg.q === 'ch') {
       t = t.concat([['ch', 'چ'], ['q', 'ق']]);
     } else {
-      // q is spoken for by چ, so ق takes the digraph qh (plus ⱪ).
-      // Without this ق was untypable.
-      t = t.concat([
-        ['q', 'چ'],
-        ['qh', 'ق'],
-        ['ⱪ', 'ق', true]
-      ]);
+      // q is spoken for by چ, so ق takes the digraph qh. Without this ق
+      // was untypable.
+      t = t.concat([['q', 'چ'], ['qh', 'ق']]);
     }
 
     // ش
-    t = t.concat(cfg.sh === 'sh' ? [['sh', 'ش']] : [['x', 'ش']]);
+    if (cfg.sh === 'sh') {
+      t = t.concat([['sh', 'ش']]);
+      // With خ on h and ش on sh, nothing claimed x and it fell through as a
+      // literal Latin letter. Yengi Yeziq spells ش as x, so accept it.
+      if (cfg.h !== 'x') t = t.concat([['x', 'ش', true]]);
+    } else {
+      t = t.concat([['x', 'ش']]);
+    }
 
     // ە  and  ې
     if (cfg.e === 'e') {
@@ -791,7 +851,7 @@
      State
      ------------------------------------------------------------------ */
 
-  var state = { mode: 'l2u', font: 'noto', e: 'e', h: 'x', q: 'ch', sh: 'sh' };
+  var state = { mode: 'l2u', font: 'tuzbasma', e: 'e', h: 'x', q: 'ch', sh: 'sh' };
 
   function loadSettings() {
     try {
@@ -909,7 +969,13 @@
   /* ---- font picker ---- */
   function applyFont() {
     var f = fontById(state.font) || FONTS[0];
-    document.documentElement.style.setProperty('--arabic', f.stack);
+    var root = document.documentElement.style;
+    root.setProperty('--arabic', f.stack);
+    root.setProperty('--sans', f.uiStack);
+    // Headings keep Instrument Serif; only body/UI text follows the choice.
+    if (document.fonts && document.fonts.load) {
+      try { document.fonts.load('700 1em ' + f.uiStack, 'Settings'); } catch (err) { /* ignore */ }
+    }
   }
 
   /* The previews are the whole point of the picker, so the faces have to be
@@ -921,10 +987,9 @@
     if (fontsWarmed) return;
     fontsWarmed = true;
     if (!document.fonts || !document.fonts.load || typeof Promise === 'undefined') return;
-    var loads = FONTS.filter(function (f) { return !f.builtin; })
-      .map(function (f) {
-        return document.fonts.load('22px "' + f.name + '"', FONT_SAMPLE);
-      });
+    var loads = FONTS.map(function (f) {
+      return document.fonts.load('22px ' + f.stack, FONT_SAMPLE);
+    });
     Promise.all(loads).then(renderFonts, function () { /* offline — swap covers it */ });
   }
 
@@ -966,8 +1031,9 @@
     });
 
     $('fontHint').textContent =
-      'The four UKIJ faces are served with the page, so they work on any ' +
-      'device. Free downloads for desktop use at ukij.org.';
+      'Your choice sets the Uyghur text and the interface; headings keep ' +
+      'their own face. The four UKIJ faces are served with the page, so ' +
+      'they work on any device. Free for desktop use at ukij.org.';
   }
 
   /* ---- settings sheet ---- */
@@ -992,9 +1058,9 @@
       } },
     { key: 'sh', glyph: 'ش', choices: ['sh', 'x'],
       note: function () {
-        return state.sh === 'sh'
-          ? 'sh → ش'
-          : 'x → ش';
+        if (state.sh !== 'sh') return 'x → ش';
+        // With خ on h, nothing else claims x, so it is taken for ش too.
+        return state.h === 'x' ? 'sh → ش' : 'sh → ش, x → ش';
       } }
   ];
 
@@ -1043,7 +1109,8 @@
 
     $('settingsHint').textContent =
       'x cannot stand for both خ and ش, so choosing one moves the other. ' +
-      'When h or q is taken by خ or چ, the digraphs hh and qh cover ھ and ق.';
+      'When h or q is taken by خ or چ, the digraphs hh and qh cover ھ and ق, ' +
+      'as do the Yengi Yeziq letters ⱨ and ⱪ, which are always accepted.';
   }
 
   /* ---- alphabet chart ---- */
