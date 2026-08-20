@@ -13,6 +13,40 @@
 <style>
   *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
+  /* UKIJ faces, self-hosted. Subset to Latin + Arabic and converted to
+     woff2 (pixel-identical to the originals). `local()` first, so anyone
+     with the desktop font installed renders from disk and downloads
+     nothing; everyone else pulls ~25 KB, and only for the face they
+     actually pick. Fonts are free from http://www.ukij.org */
+  @font-face {
+    font-family: 'UKIJ Tuz Basma';
+    src: local('UKIJ Tuz Basma'), url('fonts/UKIJTuzBasma.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'UKIJ Tuz Kitab';
+    src: local('UKIJ Tuz Kitab'), url('fonts/UKIJTuzKitab.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'UKIJ Basma Qara';
+    src: local('UKIJ Basma Qara'), url('fonts/UKIJBasmaQara.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'UKIJ Tuz Gezit';
+    src: local('UKIJ Tuz Gezit'), url('fonts/UKIJTuzGezit.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+  }
+
   :root {
     --paper: #F7F3EA;
     --paper-2: #EDE7DA;
@@ -378,6 +412,51 @@
   }
   .choice[aria-pressed="true"] { background: var(--green); border-color: var(--green); color: var(--paper); }
 
+  .sheet-section { display: flex; flex-direction: column; gap: 10px; }
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .font-list { display: flex; flex-direction: column; gap: 8px; }
+  .font-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 11px 14px;
+    font: inherit;
+    color: var(--ink);
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .font-row:hover { border-color: var(--green); }
+  .font-row[aria-pressed="true"] {
+    border-color: var(--green);
+    box-shadow: inset 0 0 0 1px var(--green);
+  }
+  .font-meta { display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; }
+  .font-name { font-size: 13px; font-weight: 600; }
+  .font-row[aria-pressed="true"] .font-name { color: var(--green); }
+  .font-state { font-size: 11px; color: var(--muted); }
+  .font-sample {
+    direction: rtl;
+    font-size: 22px;
+    line-height: 1.5;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+  }
+
   .chart-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
   .chart-cell {
     background: var(--card);
@@ -454,7 +533,7 @@
         </div>
       </section>
 
-      <p class="note">Letter mappings for <span lang="ug">ئە</span>, <span lang="ug">خ</span>, <span lang="ug">چ</span> and <span lang="ug">ش</span> can be changed in settings and are remembered on this device.</p>
+      <p class="note">The Uyghur font and the letter mappings for <span lang="ug">ئە</span>, <span lang="ug">خ</span>, <span lang="ug">چ</span> and <span lang="ug">ش</span> can be changed in settings and are remembered on this device.</p>
     </main>
 
     <footer class="site-foot">
@@ -464,13 +543,23 @@
   </div>
 
   <div class="scrim" id="settingsScrim" hidden>
-    <div class="sheet" role="dialog" aria-modal="true" aria-label="Letter mappings">
+    <div class="sheet" role="dialog" aria-modal="true" aria-label="Settings">
       <div class="sheet-head">
-        <h2>Letter mappings</h2>
+        <h2>Settings</h2>
         <button type="button" class="sheet-close" data-close aria-label="Close">✕</button>
       </div>
-      <div id="settingRows" style="display:flex; flex-direction:column; gap:10px;"></div>
-      <p class="sheet-note" id="settingsHint"></p>
+
+      <div class="sheet-section">
+        <span class="section-label">Uyghur font</span>
+        <div class="font-list" id="fontRows"></div>
+        <p class="sheet-note" id="fontHint"></p>
+      </div>
+
+      <div class="sheet-section">
+        <span class="section-label">Letter mappings</span>
+        <div id="settingRows" style="display:flex; flex-direction:column; gap:10px;"></div>
+        <p class="sheet-note" id="settingsHint"></p>
+      </div>
     </div>
   </div>
 
@@ -535,6 +624,31 @@
     'ڭ ل م ن ھ و ۇ ۆ ۈ ۋ ' +
     'ې ى ي ، ؟ ۔'
   ).split(' ');
+
+  /* ------------------------------------------------------------------
+     Uyghur display fonts. The four UKIJ faces are the ones Uyghur
+     typesetting actually uses. They are self-hosted (see the @font-face
+     rules above) so every visitor gets them, installed or not; each stack
+     still ends in Noto Naskh Arabic in case a download fails.
+     ------------------------------------------------------------------ */
+  var FONTS = [
+    { id: 'noto',      name: 'Noto Naskh Arabic', note: 'Naskh, the default',   builtin: true },
+    { id: 'tuzbasma',  name: 'UKIJ Tuz Basma',    note: 'Body text' },
+    { id: 'tuzkitab',  name: 'UKIJ Tuz Kitab',    note: 'Body text, wider' },
+    { id: 'basmaqara', name: 'UKIJ Basma Qara',   note: 'Heavier, compact' },
+    { id: 'tuzgezit',  name: 'UKIJ Tuz Gezit',    note: 'Newspaper' }
+  ];
+  FONTS.forEach(function (f) {
+    f.stack = f.builtin
+      ? "'Noto Naskh Arabic', serif"
+      : "'" + f.name + "', 'Noto Naskh Arabic', serif";
+  });
+  var FONT_SAMPLE = 'ئۇيغۇرچە يېزىق';
+
+  function fontById(id) {
+    for (var i = 0; i < FONTS.length; i++) if (FONTS[i].id === id) return FONTS[i];
+    return null;
+  }
 
   // Canonical Uyghur alphabet order, for the chart.
   var ORDER = (
@@ -677,7 +791,7 @@
      State
      ------------------------------------------------------------------ */
 
-  var state = { mode: 'l2u', e: 'e', h: 'x', q: 'ch', sh: 'sh' };
+  var state = { mode: 'l2u', font: 'noto', e: 'e', h: 'x', q: 'ch', sh: 'sh' };
 
   function loadSettings() {
     try {
@@ -687,6 +801,7 @@
         if (saved.h === 'x' || saved.h === 'h') state.h = saved.h;
         if (saved.q === 'ch' || saved.q === 'q') state.q = saved.q;
         if (saved.sh === 'sh' || saved.sh === 'x') state.sh = saved.sh;
+        if (saved.font && fontById(saved.font)) state.font = saved.font;
       }
     } catch (err) { /* private mode, corrupt JSON — defaults are fine */ }
     resolveConflict('sh');
@@ -695,7 +810,7 @@
   function saveSettings() {
     try {
       localStorage.setItem(STORE, JSON.stringify({
-        e: state.e, h: state.h, q: state.q, sh: state.sh
+        e: state.e, h: state.h, q: state.q, sh: state.sh, font: state.font
       }));
     } catch (err) { /* ignore */ }
   }
@@ -790,6 +905,70 @@
       syncCounts();
     });
   })();
+
+  /* ---- font picker ---- */
+  function applyFont() {
+    var f = fontById(state.font) || FONTS[0];
+    document.documentElement.style.setProperty('--arabic', f.stack);
+  }
+
+  /* The previews are the whole point of the picker, so the faces have to be
+     in hand before the rows are drawn — otherwise all five render in the
+     fallback and look identical. Fetch them the first time the sheet is
+     opened, then redraw. */
+  var fontsWarmed = false;
+  function warmFonts() {
+    if (fontsWarmed) return;
+    fontsWarmed = true;
+    if (!document.fonts || !document.fonts.load || typeof Promise === 'undefined') return;
+    var loads = FONTS.filter(function (f) { return !f.builtin; })
+      .map(function (f) {
+        return document.fonts.load('22px "' + f.name + '"', FONT_SAMPLE);
+      });
+    Promise.all(loads).then(renderFonts, function () { /* offline — swap covers it */ });
+  }
+
+  function renderFonts() {
+    var host = $('fontRows');
+    host.textContent = '';
+    FONTS.forEach(function (f) {
+      var row = document.createElement('button');
+      row.type = 'button';
+      row.className = 'font-row';
+      row.setAttribute('aria-pressed', String(state.font === f.id));
+
+      var meta = document.createElement('div');
+      meta.className = 'font-meta';
+      var name = document.createElement('span');
+      name.className = 'font-name';
+      name.textContent = f.name;
+      var note = document.createElement('span');
+      note.className = 'font-state';
+      note.textContent = f.note;
+      meta.appendChild(name);
+      meta.appendChild(note);
+
+      var sample = document.createElement('span');
+      sample.className = 'font-sample';
+      sample.lang = 'ug';
+      sample.style.fontFamily = f.stack;
+      sample.textContent = FONT_SAMPLE;
+
+      row.appendChild(meta);
+      row.appendChild(sample);
+      row.addEventListener('click', function () {
+        state.font = f.id;
+        applyFont();
+        saveSettings();
+        renderFonts();
+      });
+      host.appendChild(row);
+    });
+
+    $('fontHint').textContent =
+      'The four UKIJ faces are served with the page, so they work on any ' +
+      'device. Free downloads for desktop use at ukij.org.';
+  }
 
   /* ---- settings sheet ---- */
   var SETTING_DEFS = [
@@ -961,11 +1140,16 @@
     }
   });
 
-  $('btnSettings').addEventListener('click', function () { openSheet(settingsScrim); });
+  $('btnSettings').addEventListener('click', function () {
+    warmFonts();
+    openSheet(settingsScrim);
+  });
   $('btnChart').addEventListener('click', function () { openSheet(chartScrim); });
 
   /* ---- boot ---- */
   loadSettings();
+  applyFont();
+  renderFonts();
   renderSettings();
   renderChart();
 

@@ -10,8 +10,35 @@ Converts text between the Uyghur Arabic script (كونا يېزىق) and Latin U
 - Both directions, with automatic RTL/LTR handling on each field
 - On-screen Uyghur keyboard for entering Arabic-script text
 - Alphabet chart reflecting your current letter mappings
+- Selectable Uyghur display font, with live previews
 - Selectable letter mappings for ئە, خ, چ and ش, remembered per device
 - Copy to clipboard, and a shareable link that carries the input text
+
+### Fonts
+
+Uyghur text can be rendered in Noto Naskh Arabic (the default, from Google
+Fonts) or in one of four UKIJ faces, which are the ones Uyghur typesetting
+actually uses:
+
+| Font | Style |
+| --- | --- |
+| UKIJ Tuz Basma | Body text |
+| UKIJ Tuz Kitab | Body text, wider |
+| UKIJ Basma Qara | Heavier, compact |
+| UKIJ Tuz Gezit | Newspaper |
+
+The UKIJ faces are [self-hosted](fonts/) as subset WOFF2, ~25 KB each, so
+they work on any device rather than only where the desktop fonts happen to
+be installed. Each `@font-face` lists `local()` ahead of the URL, so anyone
+who does have them installed renders from disk and downloads nothing.
+
+Loading is lazy. A visitor on the default font fetches no UKIJ file at all;
+picking one costs a single ~25 KB request. All four load together only when
+the settings sheet is opened, since the picker previews each face in itself.
+
+See [fonts/README.md](fonts/README.md) for attribution and how the subsets
+were built. The fonts are free from [ukij.org](http://www.ukij.org) and are
+not covered by this repository's license.
 
 ## Transliteration notes
 
@@ -42,4 +69,6 @@ moves the other to its alternative.
 
 ## License
 
-Apache 2.0 — see [LICENSE](LICENSE).
+The converter is Apache 2.0 — see [LICENSE](LICENSE). The bundled UKIJ fonts
+are the work of the Uyghur Computer Science Association and carry their own
+terms; see [fonts/README.md](fonts/README.md).
